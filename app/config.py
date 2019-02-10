@@ -9,6 +9,7 @@ class Config(object):
     # My Own
     TESTING = False
     CSRF_ENABLED = True
+    
     #----
 #
 #
