@@ -9,20 +9,23 @@ class Config(object):
     # My Own
     TESTING = False
     CSRF_ENABLED = True
-    
-    #----
-#
-#
-# class ProductionConfig(Config):
-#     DEBUG = False
-#
-#
-# class DevelopmentCOnfig(Config):
-#     DEBUG = True
-#     DEVELOPMENT = True
-#
-#
-# class TestingConfig(Config):
-#     TESTING = True
-#
-#
+
+
+class ProductionConfig(Config):
+    DEBUG = False
+
+
+class StagingConfig(Config):
+    DEVELOPMENT = True
+    DEBUG = True
+
+
+class DevelopmentConfig(Config):
+    DEBUG = True
+    DEVELOPMENT = True
+
+
+class TestingConfig(Config):
+    TESTING = True
+
+
