@@ -1,7 +1,8 @@
 from flask import Flask
-from app.config import Config
+from flask_bcrypt import Bcrypt
 from flask_sqlalchemy import SQLAlchemy
-import os
+
+from app.config import Config
 
 app = Flask(__name__)
 
@@ -9,6 +10,8 @@ app = Flask(__name__)
 app.config.from_object(Config)
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
+bcrypt = Bcrypt(app)
+
 
 from app.models import User
 from app import routes
