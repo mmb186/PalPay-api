@@ -6,7 +6,7 @@ import jwt
 from flask import make_response, jsonify, request
 
 from app import app
-from app.models import User
+from app.models.User import User
 from app.models.BlackListedToken import BlackListedToken
 
 
@@ -33,8 +33,7 @@ class AuthToken:
             payload = jwt.decode(token, app.config['SECRETE_KEY'], algorithms='HS256')
             if BlackListedToken.is_black_listed(token):
                 return 'Please Sign in again.'
-            else:
-                return payload['user_id']
+            return payload['user_id']
         except jwt.ExpiredSignatureError:
             return 'Token expired, Please Sign again'
         except jwt.InvalidTokenError:
@@ -64,11 +63,11 @@ def login_required_jwt(f):
         token = None
         if 'Authorization' in request.headers:
             print("login_required_jwt executed")
-            token = request.headers['Autherization'].split(" ")[0]
-        if not token:
+            token = request.headers['Authorization'].split(" ")[0]
+        if not token or BlackListedToken.is_black_listed(token):
             return make_response(jsonify({
                 'status': 'failed',
-                'message': 'Provide a valid auth token'
+                'message': 'Provide a valid auth token. Log in again please'
             })), 403
         user_id = AuthToken.decode_auth_token(token)
         current_user = User.get_by_id(user_id)

@@ -22,6 +22,6 @@ class BlackListedToken(db.Model):
         db.session.commit()
         return self
 
-    @staticmethod
-    def is_black_listed(token):
-        return db.query.filter_by(token=token).first is not None
+    @classmethod
+    def is_black_listed(cls, token):
+        return cls.query.filter_by(token=token).first() is not None

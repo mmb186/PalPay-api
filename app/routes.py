@@ -71,5 +71,5 @@ def logout():
 
 @app.route('/api/protected_resource/', methods=['POST', 'GET'])
 @login_required_jwt
-def protected_resource():
+def protected_resource(current_user):
     return jsonify({'status': 'Protected'})
