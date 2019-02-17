@@ -1,16 +1,12 @@
-import uuid
-
-import json
+from flask import jsonify, request
 
 from app import app, bcrypt
-from flask import jsonify, request
-from flask import Response
-
 from app.auth.helpers import AuthToken, ResponseCreator
+from app.auth.helpers import login_required_jwt
 from app.models.BlackListedToken import BlackListedToken
 from app.models.User import User
 from app.utilities.validators import is_valid_user_info, is_valid_email
-from app.auth.helpers import login_required_jwt
+
 
 @app.route('/')
 def index():
@@ -84,5 +80,28 @@ def get_all_users(current_user):
     users = User.get_all()
     users_response = []
     for user in users:
-        users_response.append({'username': user.username})
+        users_response.append({
+            'username': user.username,
+            'fullname': user.first_name + ' ' + user.last_name,
+            'email': user.email
+        })
     return jsonify({'users': users_response})
+
+
+@app.route('/api/add_trusted_contact/', methods=['POST'])
+@login_required_jwt
+def add_trusted_contact(current_user):
+    contact = User.get_by_username(request.get_json()['username'])
+    if contact is not None:
+        current_user.add_contact(contact)
+        current_user.save()
+        return ResponseCreator.response(
+            'success',
+            f'Added {contact.username} to trusted contacts',
+            200
+        )
+    return ResponseCreator.response(
+        'error',
+        f'user: {contact.username} was not found',
+        201
+    )
