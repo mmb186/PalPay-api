@@ -1,13 +1,16 @@
 import uuid
 
+import json
+
 from app import app, bcrypt
 from flask import jsonify, request
+from flask import Response
 
 from app.auth.helpers import AuthToken, ResponseCreator
 from app.models.BlackListedToken import BlackListedToken
 from app.models.User import User
 from app.utilities.validators import is_valid_user_info, is_valid_email
-from app.auth.helpers import  login_required_jwt
+from app.auth.helpers import login_required_jwt
 
 @app.route('/')
 def index():
@@ -28,10 +31,10 @@ def create_user():
     else:
         new_user = User(
             email=data['email'],
-            public_id=uuid.uuid4(),
             password=User.generate_hash(data['password']),
             first_name=data['first_name'],
-            last_name=data['last_name']
+            last_name=data['last_name'],
+            username=data['username']
         )
         new_user.save()
         return ResponseCreator.response_auth(
@@ -73,3 +76,13 @@ def logout():
 @login_required_jwt
 def protected_resource(current_user):
     return jsonify({'status': 'Protected'})
+
+
+@app.route('/api/get_all_users/', methods=['GET'])
+@login_required_jwt
+def get_all_users(current_user):
+    users = User.get_all()
+    users_response = []
+    for user in users:
+        users_response.append({'username': user.username})
+    return jsonify({'users': users_response})
