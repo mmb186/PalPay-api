@@ -1,4 +1,4 @@
-"""empty created blacklist tokens
+"""created blacklist tokens
 
 Revision ID: 7436a8d73842
 Revises: 7cf6acee3bbb
