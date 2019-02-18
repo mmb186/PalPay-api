@@ -5,15 +5,14 @@ from app import db
 
 
 class UserTabStatus(enum.Enum):
-    PENDING = 1
-    APPROVED = 2
-    DECLINED = 3
-    CLOSED = 4
+    PENDING = 'pending'
+    APPROVED = 'approved'
+    DECLINED = 'declined'
 
 
-class UserTabStatus(db.Model):
+class TabUserStatus(db.Model):
     """
-        Model for status of users in a tab
+        Model for status and balance of users in a tab
     """
     __tablename__ = 'user_tab_status'
 
