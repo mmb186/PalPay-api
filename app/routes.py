@@ -92,16 +92,35 @@ def get_all_users(current_user):
 @login_required_jwt
 def add_trusted_contact(current_user):
     contact = User.get_by_username(request.get_json()['username'])
-    if contact is not None:
+    if contact is not None and not (current_user.id == contact.id):
         current_user.add_contact(contact)
         current_user.save()
-        return ResponseCreator.response(
-            'success',
-            f'Added {contact.username} to trusted contacts',
-            200
-        )
+        message_status = 'success'
+        message = f'Added {contact.username} to trusted contacts'
+    else:
+        message_status = 'error'
+        message = f'user: {contact.username} was not found or you tried to add yourself'
     return ResponseCreator.response(
-        'error',
-        f'user: {contact.username} was not found',
+        message_status,
+        message,
         201
+    )
+
+
+@app.route('/api/remove_trusted_contact/', methods=['POST'])
+@login_required_jwt
+def remove_trusted_contact(current_user):
+    contact = User.get_by_username(request.get_json()['username'])
+    if contact in current_user.trusted_contacts:
+        current_user.remove_contact(contact)
+        current_user.save()
+        message_status = 'success',
+        message = f'User {contact.username} has been removed',
+    else:
+        message_status = 'fail'
+        message = f'user {contact.username} is not a contact'
+    return ResponseCreator.response(
+        message_status,
+        message,
+        200
     )
