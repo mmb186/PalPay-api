@@ -4,6 +4,7 @@ from app import app, bcrypt
 from app.auth.utilities import AuthToken, ResponseCreator
 from app.auth.utilities import login_required_jwt
 from app.models.BlackListedToken import BlackListedToken
+# from app.models.Tabs import Tab, UserTabStatus
 from app.models.User import User
 from app.utilities.validators import is_valid_user_info, is_valid_email
 
