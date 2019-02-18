@@ -4,7 +4,6 @@ from app import app, bcrypt
 from app.auth.utilities import AuthToken, ResponseCreator
 from app.auth.utilities import login_required_jwt
 from app.models.BlackListedToken import BlackListedToken
-# from app.models.Tabs import Tab, UserTabStatus
 from app.models.User import User
 from app.utilities.validators import is_valid_user_info, is_valid_email
 
@@ -93,35 +92,16 @@ def get_all_users(current_user):
 @login_required_jwt
 def add_trusted_contact(current_user):
     contact = User.get_by_username(request.get_json()['username'])
-    if contact is not None and not (current_user.id == contact.id):
+    if contact is not None:
         current_user.add_contact(contact)
         current_user.save()
-        message_status = 'success'
-        message = f'Added {contact.username} to trusted contacts'
-    else:
-        message_status = 'error'
-        message = f'user: {contact.username} was not found or you tried to add yourself'
+        return ResponseCreator.response(
+            'success',
+            f'Added {contact.username} to trusted contacts',
+            200
+        )
     return ResponseCreator.response(
-        message_status,
-        message,
+        'error',
+        f'user: {contact.username} was not found',
         201
-    )
-
-
-@app.route('/api/remove_trusted_contact/', methods=['POST'])
-@login_required_jwt
-def remove_trusted_contact(current_user):
-    contact = User.get_by_username(request.get_json()['username'])
-    if contact in current_user.trusted_contacts:
-        current_user.remove_contact(contact)
-        current_user.save()
-        message_status = 'success',
-        message = f'User {contact.username} has been removed',
-    else:
-        message_status = 'fail'
-        message = f'user {contact.username} is not a contact'
-    return ResponseCreator.response(
-        message_status,
-        message,
-        200
     )
