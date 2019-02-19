@@ -105,3 +105,33 @@ def add_trusted_contact(current_user):
         f'user: {contact.username} was not found',
         201
     )
+
+# --------------------
+# Tabs:
+# --------------------
+
+
+@app.route('/api/create_new_tab/', methods=['POST'])
+@login_required_jwt
+def create_new_tab(current_user):
+    # create new tab. ARGS:
+    return jsonify({'status': 'ok'})
+
+
+@app.route('/api/set_user_tab_status/', methods=['POST'])
+@login_required_jwt
+def set_user_tab_status(curernt_user):
+    # send tab_id, and user, and
+    return jsonify({'status': 'ok'})
+
+
+
+
+
+
+
+
+
+
+
+
