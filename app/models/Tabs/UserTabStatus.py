@@ -9,6 +9,15 @@ class UserTabStatus(enum.Enum):
     APPROVED = 'approved'
     DECLINED = 'declined'
 
+    @classmethod
+    def get_status_enum(cls, status_name):
+        if status_name == 'APPROVED':
+            return UserTabStatus.APPROVED
+        elif status_name == 'DECLINED':
+            return UserTabStatus.DECLINED
+        else:
+            return UserTabStatus.PENDING
+
 
 class TabUserStatus(db.Model):
     """
@@ -19,14 +28,36 @@ class TabUserStatus(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     tab_id = db.Column(db.Integer, db.ForeignKey('tabs.id'), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    balance = db.Column(db.NUMERIC, nullable=False, default=0)
+    balance = db.Column(db.FLOAT, nullable=False, default=0)
     status = db.Column(db.Enum(UserTabStatus), nullable=False, unique=False,
                        default=UserTabStatus.PENDING)
     creation_time = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     last_modified_time = db.Column(db.DateTime, nullable=False, default=datetime.utcnow,
                                    onupdate=datetime.utcnow)
 
-    def __init__(self, tab_id, user_id):
+    def __init__(self, tab_id, user_id, status=UserTabStatus.PENDING):
         self.tab_id = tab_id
         self.user_id = user_id
+        self.status = status
+
+    def save(self):
+        db.session.add(self)
+        db.session.commit()
+        return self
+
+    def update_status(self, new_status):
+        self.status = UserTabStatus.get_status_enum(new_status)
+        self.save()
+
+    @classmethod
+    def get_all_tab_status(cls, tab_id):
+        return cls.query.filter_by(tab_id=tab_id).all()
+
+    @classmethod
+    def get_by_tab_id_and_user_id(cls, tab_id, user_id):
+        return cls.query\
+            .filter_by(tab_id=tab_id)\
+            .filter_by(user_id=user_id)\
+            .first()
+
 
