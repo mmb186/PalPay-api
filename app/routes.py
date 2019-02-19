@@ -1,10 +1,13 @@
 from flask import jsonify, request
 
 from app import app, bcrypt
-from app.auth.helpers import AuthToken, ResponseCreator
-from app.auth.helpers import login_required_jwt
+from app.auth.utilities import AuthToken, ResponseCreator
+from app.auth.utilities import login_required_jwt
 from app.models.BlackListedToken import BlackListedToken
+from app.models.Tabs.Tab import Tab, TabStatus
+from app.models.Tabs.UserTabStatus import TabUserStatus, UserTabStatus
 from app.models.User import User
+from app.utilities.utilities_data_view_generator import create_tab_view_dictionary, has_all_users_approved
 from app.utilities.validators import is_valid_user_info, is_valid_email
 
 
@@ -92,35 +95,83 @@ def get_all_users(current_user):
 @login_required_jwt
 def add_trusted_contact(current_user):
     contact = User.get_by_username(request.get_json()['username'])
-    if contact is not None and not (current_user.id == contact.id):
+    if contact is not None:
         current_user.add_contact(contact)
         current_user.save()
-        message_status = 'success'
-        message = f'Added {contact.username} to trusted contacts'
-    else:
-        message_status = 'error'
-        message = f'user: {contact.username} was not found or you tried to add yourself'
+        return ResponseCreator.response(
+            'success',
+            f'Added {contact.username} to trusted contacts',
+            200
+        )
     return ResponseCreator.response(
-        message_status,
-        message,
+        'error',
+        f'user: {contact.username} was not found',
         201
     )
 
+# --------------------------------------------------------------------------------
+# Tabs
+# --------------------------------------------------------------------------------
 
-@app.route('/api/remove_trusted_contact/', methods=['POST'])
+
+@app.route('/api/create_new_tab/', methods=['POST'])
 @login_required_jwt
-def remove_trusted_contact(current_user):
-    contact = User.get_by_username(request.get_json()['username'])
-    if contact in current_user.trusted_contacts:
-        current_user.remove_contact(contact)
-        current_user.save()
-        message_status = 'success',
-        message = f'User {contact.username} has been removed',
+def create_new_tab(current_user):
+    tab_data = request.get_json()
+    other_user = User.get_by_username(tab_data['otheruser'])
+    if not other_user.id == current_user.id:
+        new_tab = Tab(name=tab_data['name'], created_by_id=current_user.id)
+        new_tab.save()
+
+        current_user_tab_status = TabUserStatus(
+            tab_id=new_tab.id,
+            user_id=current_user.id,
+            status=UserTabStatus.APPROVED,
+        )
+        other_user_tab_status = TabUserStatus(
+            tab_id=new_tab.id, user_id=other_user.id
+        )
+        current_user_tab_status.save()
+        other_user_tab_status.save()
+        tab_view_data = create_tab_view_dictionary(new_tab, current_user_tab_status)
+        return jsonify({'status': 'ok', 'created_tab': tab_view_data})
     else:
-        message_status = 'fail'
-        message = f'user {contact.username} is not a contact'
-    return ResponseCreator.response(
-        message_status,
-        message,
-        200
+        return jsonify({'error': 'Currently, you cannot create a tab with yourself'})
+
+
+@app.route('/api/set_user_tab_status/', methods=['POST'])
+@login_required_jwt
+def set_user_tab_status(current_user):
+    # TODO: handle decline --> delete/archive Tab
+
+    tab_user_status = TabUserStatus.get_by_tab_id_and_user_id(
+        tab_id=request.get_json()['tab_id'],
+        user_id=current_user.id,
     )
+    if tab_user_status is not None:
+        updated_status = request.get_json()['tab_status']
+        tab_user_status.update_status(updated_status)
+        tab = Tab.get_by_id(tab_user_status.tab_id)
+        all_users_approved = has_all_users_approved(tab_user_status)
+        if all_users_approved:
+            tab.update_tab_status(TabStatus.ACTIVE)
+        return jsonify({
+            'status': 'ok',
+            'updated_tab': create_tab_view_dictionary(tab, tab_user_status)
+        })
+        pass
+    else:
+        return jsonify({'status': 'Tab with use does not exist, or was deleted'})
+
+
+
+
+
+
+
+
+
+
+
+
+

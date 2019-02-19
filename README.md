@@ -12,8 +12,8 @@ To Upgrade Local:
 
 
 To Upgrade Staging:
-    `heroku run python manage.py db upgrade --app friendpay-stage`
+    `heoku run python manage.py db upgrade --app --friendpay-stage`
 
 To Upgrade Production:
-    `heroku run python manage.py db upgrade --app friendpay-pro`
+    `heoku run python manage.py db upgrade --app --friendpay-pro`
 
