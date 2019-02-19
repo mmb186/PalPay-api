@@ -18,7 +18,7 @@ class TabUserStatus(db.Model):
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     tab_id = db.Column(db.Integer, db.ForeignKey('tabs.id'), nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     balance = db.Column(db.NUMERIC, nullable=False, default=0)
     status = db.Column(db.Enum(UserTabStatus), nullable=False, unique=False,
                        default=UserTabStatus.PENDING)
