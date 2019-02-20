@@ -14,5 +14,5 @@ bcrypt = Bcrypt(app)
 
 
 from app.models import User
-from app.models.Tabs import Tab, UserTabStatus
+from app.models.Tabs import Tab, UserTabStatus, TabTransaction, UserTabTransactionStatus
 from app import routes

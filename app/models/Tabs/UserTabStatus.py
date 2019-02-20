@@ -1,22 +1,7 @@
-import enum
 from datetime import datetime
 
 from app import db
-
-
-class UserTabStatus(enum.Enum):
-    PENDING = 'pending'
-    APPROVED = 'approved'
-    DECLINED = 'declined'
-
-    @classmethod
-    def get_status_enum(cls, status_name):
-        if status_name == 'APPROVED':
-            return UserTabStatus.APPROVED
-        elif status_name == 'DECLINED':
-            return UserTabStatus.DECLINED
-        else:
-            return UserTabStatus.PENDING
+from app.models.Tabs.enums import UserTabStatus
 
 
 class TabUserStatus(db.Model):
@@ -50,7 +35,7 @@ class TabUserStatus(db.Model):
         self.save()
 
     @classmethod
-    def get_all_tab_status(cls, tab_id):
+    def get_all_users_tab_status(cls, tab_id):
         return cls.query.filter_by(tab_id=tab_id).all()
 
     @classmethod

@@ -5,9 +5,14 @@ from app.auth.utilities import AuthToken, ResponseCreator
 from app.auth.utilities import login_required_jwt
 from app.models.BlackListedToken import BlackListedToken
 from app.models.Tabs.Tab import Tab, TabStatus
-from app.models.Tabs.UserTabStatus import TabUserStatus, UserTabStatus
+from app.models.Tabs.TabTransaction import TabTransaction
+from app.models.Tabs.UserTabStatus import TabUserStatus
+from app.models.Tabs.enums import UserTabStatus
+from app.models.Tabs.UserTabTransactionStatus import UserTabTransactionStatus
+
 from app.models.User import User
-from app.utilities.utilities_data_view_generator import create_tab_view_dictionary, has_all_users_approved
+from app.utilities.utilities_data_view_generator import create_tab_view_dictionary, has_all_users_approved, \
+    get_transaction_type_enum
 from app.utilities.validators import is_valid_user_info, is_valid_email
 
 
@@ -164,14 +169,52 @@ def set_user_tab_status(current_user):
         return jsonify({'status': 'Tab with use does not exist, or was deleted'})
 
 
+@app.route('/api/create_tab_transaction/', methods=['POST'])
+@login_required_jwt
+def create_tab_transaction(current_user):
+    # TODO:
+    #   - Create a new tab_transaction
+    #   - create 2 UserTabTransaction_status'
+    data = request.get_json()
+    transaction_type = get_transaction_type_enum(data['transaction_type'])
+    if transaction_type is not None:
+        # create new transaction and others
+        new_transaction = TabTransaction(
+            tab_id=data['tab_id'],
+            creator_id=current_user.id,
+            transaction_type=transaction_type
+        )
+        new_transaction.save()
+        users_in_tab = TabUserStatus.get_all_users_tab_status(new_transaction.tab_id)
+        for user in users_in_tab:
+            if user.id == current_user.id:
+                creator_tab_transaction_status = UserTabTransactionStatus(
+                    tab_tansaction_id=new_transaction.id,
+                    user_id=current_user.id,
+                    status=UserTabStatus.APPROVED
+                )
+                creator_tab_transaction_status.save()
+            else:
+                other_user_tab_transaction_status = UserTabTransactionStatus(
+                    tab_tansaction_id=new_transaction.id,
+                    user_id=current_user.id,
+                )
+                other_user_tab_transaction_status.save()
+    else:
+        return ResponseCreator.response(
+            'error',
+            f'Invalid transaction type. Either send: WITHRDAW or DEPOSIT ',
+            201
+        )
 
 
+@app.route('/api/set_tab_transaction_status/', methods=['POST'])
+@login_required_jwt
+def set_tab_transaction_status(current_user):
+    # TODO:
+    #   - set user tab transaction status
+    #   - if all approved, set Tab transaction to Approved.
+    #   Update Tab UserTab Status balance.
+    #   - if declined, set tab transaction to declined.
 
-
-
-
-
-
-
-
-
+    return jsonify({'status': 'ok'})
