@@ -11,7 +11,8 @@ class UserTabTransactionStatus(db.Model):
     __tablename__ = 'user_tab_transaction_status'
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    tab_transaction_id = db.Column(db.Integer, db.ForeignKey('tab_transactions.id'), nullable=False)
+    tab_transaction_id = db.Column(db.Integer, db.ForeignKey('tab_transactions.id'),
+                                   nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     status = db.Column(db.Enum(TabTransactionStatus), nullable=False)
     creation_time = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
@@ -20,10 +21,21 @@ class UserTabTransactionStatus(db.Model):
 
     def __init__(self, tab_transaction_id, user_id, status=TabTransactionStatus.PENDING):
         self.tab_transaction_id = tab_transaction_id
-        self.created_by_id = user_id
+        self.user_id = user_id
         self.status = status
 
     def save(self):
-        db.sessiong.add(self)
+        db.session.add(self)
         db.session.commit()
         return self
+
+    @classmethod
+    def get_by_tab_transaction_id_and_user_id(cls, tab_transaction_id, user_id):
+        return cls.query\
+            .filter_by(tab_transaction_id=tab_transaction_id)\
+            .filter_by(user_id=user_id)\
+            .first()
+
+    @classmethod
+    def get_transaction_by_tab_transaction_id(cls, tab_transaction_id):
+        return cls.query.filter_by(tab_transaction_id=tab_transaction_id).all()

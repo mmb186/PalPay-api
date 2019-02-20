@@ -1,6 +1,7 @@
+from app.models.Tabs.UserTabTransactionStatus import UserTabTransactionStatus
 from app.models.Tabs.TabTransaction import TransactionType
 from app.models.Tabs.UserTabStatus import TabUserStatus
-from app.models.Tabs.enums import UserTabStatus
+from app.models.Tabs.enums import UserTabStatus, TabTransactionStatus
 
 
 def create_tab_view_dictionary(tab_model, user_tab_status):
@@ -31,3 +32,28 @@ def get_transaction_type_enum(transaction_type):
         return TransactionType.DEPOSIT
     else:
         return None
+
+
+def has_all_approved_transaction(tab_transaction):
+    all_approved = True
+    users_tab_transaction_statuses = UserTabTransactionStatus.\
+        get_transaction_by_tab_transaction_id(tab_transaction.id)
+    for user_tab_transaction_status in users_tab_transaction_statuses:
+        if not (user_tab_transaction_status.status == TabTransactionStatus.APPROVED):
+            all_approved = False
+            break
+    return all_approved
+
+
+def updated_user_tab_status(tab_transaction):
+    transaction_amount = tab_transaction.amount
+    if not tab_transaction.transaction_type == TransactionType.WITHDRAW:
+        transaction_amount = transaction_amount * (-1)
+    users_tab_status = TabUserStatus.get_all_users_tab_status(tab_transaction.tab_id)
+    for user_tab_status in users_tab_status:
+        if user_tab_status.user_id == tab_transaction.created_by_id:
+            user_tab_status.balance = user_tab_status.balance - transaction_amount
+        else:
+            user_tab_status.balance = user_tab_status.balance + transaction_amount
+        user_tab_status.save()
+    return True

@@ -17,22 +17,25 @@ class TabTransaction(db.Model):
     __tablename__ = 'tab_transactions'
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    # name = db.Column(db.String, nullable=False)
     tab_id = db.Column(db.Integer, db.ForeignKey('tabs.id'), nullable=False)
     created_by_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     transaction_type = db.Column(db.Enum(TransactionType), nullable=False, unique=False)
-    status = db.Column(db.Enum(TabTransactionStatus), nullable=False, default=TabTransactionStatus.PENDING)
+    status = db.Column(db.Enum(TabTransactionStatus), nullable=False,
+                       default=TabTransactionStatus.PENDING)
     amount = db.Column(db.Float, nullable=False)
     creation_time = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     last_modified_time = db.Column(db.DateTime, nullable=False, default=datetime.utcnow,
                                    onupdate=datetime.utcnow)
 
-    def __init__(self, tab_id, creator_id, transaction_type):
+    def __init__(self, tab_id, creator_id, transaction_type, amount):
         self.tab_id = tab_id
         self.created_by_id = creator_id
         self.transaction_type = transaction_type
+        self.amount = amount
 
     def save(self):
-        db.sessiong.add(self)
+        db.session.add(self)
         db.session.commit()
         return self
 

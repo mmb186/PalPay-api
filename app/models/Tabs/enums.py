@@ -20,3 +20,12 @@ class TabTransactionStatus(enum.Enum):
     PENDING = 'pending'
     APPROVED = 'approved'
     DECLINED = 'declined'
+
+    @classmethod
+    def get_status_enum(cls, status_name):
+        if status_name == 'APPROVED':
+            return TabTransactionStatus.APPROVED
+        elif status_name == 'DECLINED':
+            return TabTransactionStatus.DECLINED
+        else:
+            return TabTransactionStatus.PENDING
