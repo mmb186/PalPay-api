@@ -21,6 +21,7 @@ class TabTransaction(db.Model):
     created_by_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     transaction_type = db.Column(db.Enum(TransactionType), nullable=False, unique=False)
     status = db.Column(db.Enum(TabTransactionStatus), nullable=False, default=TabTransactionStatus.PENDING)
+    amount = db.Column(db.Float, nullable=False)
     creation_time = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     last_modified_time = db.Column(db.DateTime, nullable=False, default=datetime.utcnow,
                                    onupdate=datetime.utcnow)

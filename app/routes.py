@@ -172,15 +172,13 @@ def set_user_tab_status(current_user):
 @app.route('/api/create_tab_transaction/', methods=['POST'])
 @login_required_jwt
 def create_tab_transaction(current_user):
-    # TODO:
-    #   - Create a new tab_transaction
-    #   - create 2 UserTabTransaction_status'
     data = request.get_json()
     transaction_type = get_transaction_type_enum(data['transaction_type'])
-    if transaction_type is not None:
+    tab = Tab.get_by_id(data['tab_id'])
+    if transaction_type is not None and tab.status == TabStatus.ACTIVE:
         # create new transaction and others
         new_transaction = TabTransaction(
-            tab_id=data['tab_id'],
+            tab_id=tab.id,
             creator_id=current_user.id,
             transaction_type=transaction_type
         )
@@ -189,21 +187,21 @@ def create_tab_transaction(current_user):
         for user in users_in_tab:
             if user.id == current_user.id:
                 creator_tab_transaction_status = UserTabTransactionStatus(
-                    tab_tansaction_id=new_transaction.id,
+                    tab_transaction_id=new_transaction.id,
                     user_id=current_user.id,
                     status=UserTabStatus.APPROVED
                 )
                 creator_tab_transaction_status.save()
             else:
                 other_user_tab_transaction_status = UserTabTransactionStatus(
-                    tab_tansaction_id=new_transaction.id,
+                    tab_transaction_id=new_transaction.id,
                     user_id=current_user.id,
                 )
                 other_user_tab_transaction_status.save()
     else:
         return ResponseCreator.response(
             'error',
-            f'Invalid transaction type. Either send: WITHRDAW or DEPOSIT ',
+            f'Invalid transaction type or tab is not yet Active',
             201
         )
 
