@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from app import db
+from app.models.Tabs import Tab
 from app.models.Tabs.enums import UserTabStatus
 
 
@@ -44,5 +45,11 @@ class TabUserStatus(db.Model):
             .filter_by(tab_id=tab_id)\
             .filter_by(user_id=user_id)\
             .first()
+
+    @classmethod
+    def get_user_tabs(cls, user_id):
+        return db.session\
+            .query(Tab.Tab, TabUserStatus)\
+            .join(TabUserStatus).filter(TabUserStatus.user_id == user_id).all()
 
 

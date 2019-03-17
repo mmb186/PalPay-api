@@ -57,3 +57,21 @@ def updated_user_tab_status(tab_transaction):
             user_tab_status.balance = user_tab_status.balance + transaction_amount
         user_tab_status.save()
     return True
+
+
+def get_user_tab_summaries(current_user_id):
+    tabs_query_results = TabUserStatus.get_user_tabs(current_user_id)
+
+    tab_summary = dict()
+    tab_summary['balance'] = 0
+    tab_summary['tabs'] = []
+    for tabs_query_result in tabs_query_results:
+        tab_info = {
+            'name': tabs_query_result[0].name,
+            'tab_status': tabs_query_result[0].status.name,
+            'user_tab_status': tabs_query_result[1].status.name,
+            'balance': tabs_query_result[1].balance
+        }
+        tab_summary['balance'] = tab_summary['balance'] + tab_info['balance']
+        tab_summary['tabs'].append(tab_info)
+    return tab_summary
