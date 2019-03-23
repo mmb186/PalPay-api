@@ -1,4 +1,4 @@
-# FriendPay API
+# PalPay-API
 Backend API for FriendPay Mobile App.
 
 
