@@ -66,11 +66,13 @@ def get_user_tab_summaries(current_user_id):
     tab_summary['balance'] = 0
     tab_summary['tabs'] = []
     for tabs_query_result in tabs_query_results:
+        tab, user_tab = tabs_query_result
         tab_info = {
-            'name': tabs_query_result[0].name,
-            'tab_status': tabs_query_result[0].status.name,
-            'user_tab_status': tabs_query_result[1].status.name,
-            'balance': tabs_query_result[1].balance
+            'name': tab.name,
+            'tab_status': tab.status.name,
+            'tab_id': tab.id,
+            'user_tab_status': user_tab.status.name,
+            'balance': user_tab.balance
         }
         tab_summary['balance'] = tab_summary['balance'] + tab_info['balance']
         tab_summary['tabs'].append(tab_info)
