@@ -147,7 +147,6 @@ def create_new_tab(current_user):
 @app.route('/api/set_user_tab_status/', methods=['POST'])
 @login_required_jwt
 def set_user_tab_status(current_user):
-    # TODO: handle decline --> delete/archive Tab
 
     tab_user_status = TabUserStatus.get_by_tab_id_and_user_id(
         tab_id=request.get_json()['tab_id'],
@@ -160,13 +159,15 @@ def set_user_tab_status(current_user):
         all_users_approved = has_all_users_approved(tab_user_status)
         if all_users_approved:
             tab.update_tab_status(TabStatus.ACTIVE)
+        else:
+            tab.update_tab_status(TabStatus.INACTIVE)
         return jsonify({
             'status': 'ok',
             'updated_tab': create_tab_view_dictionary(tab, tab_user_status)
         })
         pass
     else:
-        return jsonify({'status': 'Tab with use does not exist, or was deleted'})
+        return jsonify({'status': 'Tab with id does not exist, or was deleted'})
 
 
 @app.route('/api/create_tab_transaction/', methods=['POST'])

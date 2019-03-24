@@ -50,6 +50,9 @@ class TabUserStatus(db.Model):
     def get_user_tabs(cls, user_id):
         return db.session\
             .query(Tab.Tab, TabUserStatus)\
-            .join(TabUserStatus).filter(TabUserStatus.user_id == user_id).all()
+            .join(TabUserStatus)\
+            .filter(TabUserStatus.user_id == user_id)\
+            .filter(Tab.Tab.status != 'INACTIVE')\
+            .all()
 
 
