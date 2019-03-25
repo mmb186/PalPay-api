@@ -77,3 +77,7 @@ def get_user_tab_summaries(current_user_id):
         tab_summary['balance'] = tab_summary['balance'] + tab_info['balance']
         tab_summary['tabs'].append(tab_info)
     return tab_summary
+
+
+def generate_tab_details(current_user, data):
+    return None
