@@ -12,7 +12,8 @@ from app.models.Tabs.UserTabTransactionStatus import UserTabTransactionStatus
 
 from app.models.User import User
 from app.utilities.utilities_data_view_generator import create_tab_view_dictionary, has_all_users_approved, \
-    get_transaction_type_enum, has_all_approved_transaction, updated_user_tab_status, get_user_tab_summaries
+    get_transaction_type_enum, has_all_approved_transaction, updated_user_tab_status, get_user_tab_summaries, \
+    generate_tab_details
 from app.utilities.validators import is_valid_user_info, is_valid_email
 
 
@@ -176,7 +177,7 @@ def create_tab_transaction(current_user):
     data = request.get_json()
     transaction_type = get_transaction_type_enum(data['transaction_type'])
     tab = Tab.get_by_id(data['tab_id'])
-    if transaction_type is not None and tab.status == TabStatus.ACTIVE:
+    if (transaction_type is not None) and (tab.status == TabStatus.ACTIVE):
         # create new transaction and others
         new_transaction = TabTransaction(
             tab_id=tab.id,
@@ -258,3 +259,11 @@ def get_all_user_tab(current_user):
     data = request.get_json()
     user_tab_summaries = get_user_tab_summaries(current_user.id)
     return jsonify({'data': user_tab_summaries})
+
+
+@app.route('/api/get_tab_details/<string:tab_id>/', methods=['GET'])
+@login_required_jwt
+def get_tab_details(current_user, tab_id):
+    data = request.get_json()
+    tab_details = generate_tab_details(current_user, tab_id)
+    return jsonify({'data': tab_details})
