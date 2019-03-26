@@ -1,6 +1,7 @@
 from app import db
 from datetime import datetime
 
+from app.models.Tabs.TabTransaction import TabTransaction
 from app.models.Tabs.enums import TabTransactionStatus
 
 
@@ -39,3 +40,13 @@ class UserTabTransactionStatus(db.Model):
     @classmethod
     def get_transaction_by_tab_transaction_id(cls, tab_transaction_id):
         return cls.query.filter_by(tab_transaction_id=tab_transaction_id).all()
+
+    @classmethod
+    def get_user_transaction_data(cls, user_id, tab_id):
+        res = ''
+        return db.session\
+            .query(TabTransaction, UserTabTransactionStatus)\
+            .join(UserTabTransactionStatus)\
+            .filter(UserTabTransactionStatus.user_id == user_id)\
+            .filter(UserTabTransactionStatus.status != 'DECLINED')\
+            .filter(TabTransaction.tab_id == tab_id).all()

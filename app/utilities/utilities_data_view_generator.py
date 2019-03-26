@@ -1,3 +1,5 @@
+from app.models.User import User
+from app.models.Tabs.Tab import Tab
 from app.models.Tabs.UserTabTransactionStatus import UserTabTransactionStatus
 from app.models.Tabs.TabTransaction import TransactionType
 from app.models.Tabs.UserTabStatus import TabUserStatus
@@ -60,7 +62,7 @@ def updated_user_tab_status(tab_transaction):
 
 
 def get_user_tab_summaries(current_user_id):
-    tabs_query_results = TabUserStatus.get_user_tabs(current_user_id)
+    tabs_query_results = TabUserStatus.get_all_user_tabs(current_user_id)
 
     tab_summary = dict()
     tab_summary['balance'] = 0
@@ -77,3 +79,27 @@ def get_user_tab_summaries(current_user_id):
         tab_summary['balance'] = tab_summary['balance'] + tab_info['balance']
         tab_summary['tabs'].append(tab_info)
     return tab_summary
+
+
+def generate_tab_details(current_user, tab_id):
+    tab_transactions = UserTabTransactionStatus.get_user_transaction_data(current_user.id, tab_id)
+    tab = Tab.get_by_id(tab_id)
+    transaction_summary = dict()
+    transaction_summary['tab_name'] = tab.name
+    transaction_summary['balance'] = TabUserStatus.get_user_tab_status(tab_id, current_user.id).balance
+    transaction_summary['transactions'] = []
+    for t in tab_transactions:
+        tab_transaction, user_transaction_status = t
+        transaction_data = {
+            'amount': tab_transaction.amount,
+            'username': User.get_by_id(tab_transaction.created_by_id).username,
+            'transaction_type': tab_transaction.transaction_type.name,
+            'transaction_status': tab_transaction.status.name,
+            'creation_time': tab_transaction.creation_time.strftime("%d-%m-%Y"),
+            'tab_transaction_id': user_transaction_status.id,
+            'user_transaction_status': user_transaction_status.status.name
+        }
+        transaction_summary['transactions'].append(transaction_data)
+    return transaction_summary
+
+

@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from app import db
-from app.models.Tabs import Tab
+from app.models.Tabs.Tab import Tab
 from app.models.Tabs.enums import UserTabStatus
 
 
@@ -40,6 +40,10 @@ class TabUserStatus(db.Model):
         return cls.query.filter_by(tab_id=tab_id).all()
 
     @classmethod
+    def get_user_tab_status(cls, tab_id, user_id):
+        return cls.query.filter_by(tab_id=tab_id).filter_by(user_id=user_id).first()
+
+    @classmethod
     def get_by_tab_id_and_user_id(cls, tab_id, user_id):
         return cls.query\
             .filter_by(tab_id=tab_id)\
@@ -47,12 +51,15 @@ class TabUserStatus(db.Model):
             .first()
 
     @classmethod
-    def get_user_tabs(cls, user_id):
+    def get_all_user_tabs(cls, user_id, tab_status='INACTIVE'):
         return db.session\
-            .query(Tab.Tab, TabUserStatus)\
+            .query(Tab, TabUserStatus)\
             .join(TabUserStatus)\
             .filter(TabUserStatus.user_id == user_id)\
-            .filter(Tab.Tab.status != 'INACTIVE')\
+            .filter(Tab.status != tab_status)\
             .all()
 
+    @classmethod
+    def get_all_active_user_tabs(cls, user_id):
+        return cls.get_all_user_tabs(user_id, 'ACTIVE')
 
