@@ -177,7 +177,7 @@ def create_tab_transaction(current_user):
     data = request.get_json()
     transaction_type = get_transaction_type_enum(data['transaction_type'])
     tab = Tab.get_by_id(data['tab_id'])
-    if transaction_type is not None and tab.status == TabStatus.ACTIVE:
+    if (transaction_type is not None) and (tab.status == TabStatus.ACTIVE):
         # create new transaction and others
         new_transaction = TabTransaction(
             tab_id=tab.id,
@@ -261,9 +261,9 @@ def get_all_user_tab(current_user):
     return jsonify({'data': user_tab_summaries})
 
 
-@app.route('api/get_tab_details/', methods=['GET'])
+@app.route('/api/get_tab_details/<string:tab_id>/', methods=['GET'])
 @login_required_jwt
-def get_tab_details(current_user):
+def get_tab_details(current_user, tab_id):
     data = request.get_json()
-    tab_details = generate_tab_details(current_user, data)
+    tab_details = generate_tab_details(current_user, tab_id)
     return jsonify({'data': tab_details})
