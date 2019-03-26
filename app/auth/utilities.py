@@ -42,11 +42,13 @@ class AuthToken:
 
 class ResponseCreator:
     @staticmethod
-    def response_auth(status, message, token, status_code):
+    def response_auth(status, message, token, user, status_code):
         return make_response(jsonify({
             'status': status,
             'message': message,
-            'auth_token': token.decode('utf-8')
+            'auth_token': token.decode('utf-8'),
+            'username': user.username,
+            'email': user.email
         })), status_code
 
     @staticmethod
