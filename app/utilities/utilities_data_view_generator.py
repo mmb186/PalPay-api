@@ -96,7 +96,8 @@ def generate_tab_details(current_user, tab_id):
             'transaction_type': tab_transaction.transaction_type.name,
             'transaction_status': tab_transaction.status.name,
             'creation_time': tab_transaction.creation_time.strftime("%d-%m-%Y"),
-            'tab_transaction_id': user_transaction_status.id,
+            'tab_transaction_id': tab_transaction.id,
+            'user_transaction_id': user_transaction_status.id,
             'user_transaction_status': user_transaction_status.status.name
         }
         transaction_summary['transactions'].append(transaction_data)
