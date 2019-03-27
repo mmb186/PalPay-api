@@ -46,6 +46,7 @@ def create_user():
             'success',
             "Successfully Registered",
             AuthToken.generate_token(new_user.id),
+            new_user,
             200)
 
 
@@ -59,7 +60,9 @@ def login():
                 'success',
                 'Successfully Logged In',
                 AuthToken.generate_token(user.id),
-                200)
+                user,
+                200,
+            )
         return ResponseCreator.response(
             'failed', 'User does not exist or password is incorrect', 401)
     return ResponseCreator.response('failed', 'Invalid Email Address')
