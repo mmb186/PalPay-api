@@ -1,22 +1,8 @@
-import enum
 from datetime import datetime
 
 from app import db
-
-
-class UserTabStatus(enum.Enum):
-    PENDING = 'pending'
-    APPROVED = 'approved'
-    DECLINED = 'declined'
-
-    @classmethod
-    def get_status_enum(cls, status_name):
-        if status_name == 'APPROVED':
-            return UserTabStatus.APPROVED
-        elif status_name == 'DECLINED':
-            return UserTabStatus.DECLINED
-        else:
-            return UserTabStatus.PENDING
+from app.models.Tabs.Tab import Tab
+from app.models.Tabs.enums import UserTabStatus
 
 
 class TabUserStatus(db.Model):
@@ -50,8 +36,12 @@ class TabUserStatus(db.Model):
         self.save()
 
     @classmethod
-    def get_all_tab_status(cls, tab_id):
+    def get_all_users_tab_status(cls, tab_id):
         return cls.query.filter_by(tab_id=tab_id).all()
+
+    @classmethod
+    def get_user_tab_status(cls, tab_id, user_id):
+        return cls.query.filter_by(tab_id=tab_id).filter_by(user_id=user_id).first()
 
     @classmethod
     def get_by_tab_id_and_user_id(cls, tab_id, user_id):
@@ -60,4 +50,16 @@ class TabUserStatus(db.Model):
             .filter_by(user_id=user_id)\
             .first()
 
+    @classmethod
+    def get_all_user_tabs(cls, user_id, tab_status='INACTIVE'):
+        return db.session\
+            .query(Tab, TabUserStatus)\
+            .join(TabUserStatus)\
+            .filter(TabUserStatus.user_id == user_id)\
+            .filter(Tab.status != tab_status)\
+            .all()
+
+    @classmethod
+    def get_all_active_user_tabs(cls, user_id):
+        return cls.get_all_user_tabs(user_id, 'ACTIVE')
 

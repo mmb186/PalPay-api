@@ -5,9 +5,15 @@ from app.auth.utilities import AuthToken, ResponseCreator
 from app.auth.utilities import login_required_jwt
 from app.models.BlackListedToken import BlackListedToken
 from app.models.Tabs.Tab import Tab, TabStatus
-from app.models.Tabs.UserTabStatus import TabUserStatus, UserTabStatus
+from app.models.Tabs.TabTransaction import TabTransaction
+from app.models.Tabs.UserTabStatus import TabUserStatus
+from app.models.Tabs.enums import UserTabStatus, TabTransactionStatus
+from app.models.Tabs.UserTabTransactionStatus import UserTabTransactionStatus
+
 from app.models.User import User
-from app.utilities.utilities_data_view_generator import create_tab_view_dictionary, has_all_users_approved
+from app.utilities.utilities_data_view_generator import create_tab_view_dictionary, has_all_users_approved, \
+    get_transaction_type_enum, has_all_approved_transaction, updated_user_tab_status, get_user_tab_summaries, \
+    generate_tab_details
 from app.utilities.validators import is_valid_user_info, is_valid_email
 
 
@@ -40,7 +46,8 @@ def create_user():
             'success',
             "Successfully Registered",
             AuthToken.generate_token(new_user.id),
-            201)
+            new_user,
+            200)
 
 
 @app.route('/api/login/', methods=['POST'])
@@ -53,7 +60,9 @@ def login():
                 'success',
                 'Successfully Logged In',
                 AuthToken.generate_token(user.id),
-                200)
+                user,
+                200,
+            )
         return ResponseCreator.response(
             'failed', 'User does not exist or password is incorrect', 401)
     return ResponseCreator.response('failed', 'Invalid Email Address')
@@ -142,7 +151,6 @@ def create_new_tab(current_user):
 @app.route('/api/set_user_tab_status/', methods=['POST'])
 @login_required_jwt
 def set_user_tab_status(current_user):
-    # TODO: handle decline --> delete/archive Tab
 
     tab_user_status = TabUserStatus.get_by_tab_id_and_user_id(
         tab_id=request.get_json()['tab_id'],
@@ -155,23 +163,110 @@ def set_user_tab_status(current_user):
         all_users_approved = has_all_users_approved(tab_user_status)
         if all_users_approved:
             tab.update_tab_status(TabStatus.ACTIVE)
+        else:
+            tab.update_tab_status(TabStatus.INACTIVE)
         return jsonify({
             'status': 'ok',
             'updated_tab': create_tab_view_dictionary(tab, tab_user_status)
         })
         pass
     else:
-        return jsonify({'status': 'Tab with use does not exist, or was deleted'})
+        return jsonify({'status': 'Tab with id does not exist, or was deleted'})
 
 
+@app.route('/api/create_tab_transaction/', methods=['POST'])
+@login_required_jwt
+def create_tab_transaction(current_user):
+    data = request.get_json()
+    transaction_type = get_transaction_type_enum(data['transaction_type'])
+    tab = Tab.get_by_id(data['tab_id'])
+    if (transaction_type is not None) and (tab.status == TabStatus.ACTIVE):
+        # create new transaction and others
+        new_transaction = TabTransaction(
+            tab_id=tab.id,
+            creator_id=current_user.id,
+            transaction_type=transaction_type,
+            amount=data['amount']
+        )
+        new_transaction.save()
+        users_in_tab = TabUserStatus.get_all_users_tab_status(new_transaction.tab_id)
+        for user_in_tab in users_in_tab:
+            if user_in_tab.user_id == current_user.id:
+                creator_tab_transaction_status = UserTabTransactionStatus(
+                    tab_transaction_id=new_transaction.id,
+                    user_id=user_in_tab.user_id,
+                    status=TabTransactionStatus.APPROVED
+                )
+                creator_tab_transaction_status.save()
+            else:
+                other_user_tab_transaction_status = UserTabTransactionStatus(
+                    tab_transaction_id=new_transaction.id,
+                    user_id=user_in_tab.user_id,
+                )
+                other_user_tab_transaction_status.save()
+        return ResponseCreator.response(
+            'success',
+            f'Transaction successfully created',
+            200
+        )
+    else:
+        return ResponseCreator.response(
+            'error',
+            f'Invalid transaction type or tab is not yet Active',
+            201
+        )
 
 
+@app.route('/api/set_tab_transaction_status/', methods=['POST'])
+@login_required_jwt
+def set_tab_transaction_status(current_user):
+    data = request.get_json()
+    tab_transaction = TabTransaction.get_by_id(data['tab_transaction_id'])
+    user_tab_transaction_status = UserTabTransactionStatus\
+        .get_by_tab_transaction_id_and_user_id(
+            tab_transaction.id,
+            current_user.id
+        )
+    if user_tab_transaction_status is not None:
+        message = None
+        user_tab_transaction_status.status = TabTransactionStatus.get_status_enum(
+            data['tab_transaction_status'])
+        user_tab_transaction_status.save()
+        transaction_approved_by_all = has_all_approved_transaction(tab_transaction)
+        if transaction_approved_by_all:
+            tab_transaction.status = TabTransactionStatus.APPROVED
+            tab_transaction.save()
+            updated_user_tab_status(tab_transaction)
+            message = 'transaction has successfully been accounted for'
+        elif user_tab_transaction_status.status == TabTransactionStatus.DECLINED:
+            tab_transaction.status = TabTransactionStatus.DECLINED
+            tab_transaction.save()
+            message = 'transaction has successfully been accounted for'
+
+        return ResponseCreator.response(
+            'success',
+            f'transaction status updated. {message}',
+            200
+        )
+    else:
+        return ResponseCreator.response(
+            'error',
+            f'transaction id does not exist',
+            201
+        )
 
 
+@app.route('/api/get_all_user_tabs/', methods=['GET'])
+@login_required_jwt
+def get_all_user_tab(current_user):
+    data = request.get_json()
+    user_tab_summaries = get_user_tab_summaries(current_user.id)
+    return jsonify({'data': user_tab_summaries})
 
 
-
-
-
-
-
+@app.route('/api/get_tab_details/<string:tab_id>/', methods=['GET'])
+@login_required_jwt
+def get_tab_details(current_user, tab_id):
+    data = request.get_json()
+    tab_details = generate_tab_details(current_user, tab_id)
+    return jsonify({'data': tab_details})
