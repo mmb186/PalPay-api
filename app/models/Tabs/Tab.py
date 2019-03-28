@@ -20,13 +20,15 @@ class Tab(db.Model):
     name = db.Column(db.String(255), nullable=False)
     created_by_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     status = db.Column(db.Enum(TabStatus), nullable=False, unique=False, default=TabStatus.PENDING)
+    is_group_tab = db.Column(db.Boolean, unique=False, default=False)
     creation_time = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     last_modified_time = db.Column(db.DateTime, nullable=False, default=datetime.utcnow,
                                    onupdate=datetime.utcnow)
 
-    def __init__(self, name, created_by_id):
+    def __init__(self, name, created_by_id, is_group_tab=False):
         self.name = name
         self.created_by_id = created_by_id
+        self.is_group_tab = is_group_tab
 
     def save(self):
         db.session.add(self)
