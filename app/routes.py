@@ -129,43 +129,51 @@ def create_new_tab(current_user):
     tab_data = request.get_json()
     other_user = User.get_by_username(tab_data['otheruser'])
     if not other_user.id == current_user.id:
-        if not tab_data['is_group_data'] == 'true':
-            new_tab = Tab(name=tab_data['name'], created_by_id=current_user.id)
-            new_tab.save()
+        new_tab = Tab(name=tab_data['name'], created_by_id=current_user.id)
+        new_tab.save()
 
-            current_user_tab_status = TabUserStatus(
-                tab_id=new_tab.id,
-                user_id=current_user.id,
-                status=UserTabStatus.APPROVED,
-            )
-            other_user_tab_status = TabUserStatus(
-                tab_id=new_tab.id, user_id=other_user.id
-            )
-            current_user_tab_status.save()
-            other_user_tab_status.save()
-        else:
-            new_tab = Tab(name=tab_data['name'], created_by_id=current_user.id, is_group_tab=True)
-            new_tab.save()
-            #
-            current_user_tab_status = TabUserStatus(
-                tab_id=new_tab.id,
-                user_id=current_user.id,
-                status=UserTabStatus.APPROVED,
-            )
-            current_user_tab_status.save()
-            users_in_group_tab = tab_data['otheruser'].split(',')
-
-            for user in users_in_group_tab:
-                other_user = User.get_by_username(user)
-                other_user_tab_status = TabUserStatus(
-                    tab_id=new_tab.id, user_id=other_user.id
-                )
-                other_user_tab_status.save()
-
+        current_user_tab_status = TabUserStatus(
+            tab_id=new_tab.id,
+            user_id=current_user.id,
+            status=UserTabStatus.APPROVED,
+        )
+        other_user_tab_status = TabUserStatus(
+            tab_id=new_tab.id, user_id=other_user.id
+        )
+        current_user_tab_status.save()
+        other_user_tab_status.save()
         tab_view_data = create_tab_view_dictionary(new_tab, current_user_tab_status)
         return jsonify({'status': 'ok', 'created_tab': tab_view_data})
     else:
         return jsonify({'error': 'Currently, you cannot create a tab with yourself'})
+
+
+@app.route('/api/create_new_group_tab/', methods=['POST'])
+@login_required_jwt
+def create_new_group_tab(current_user):
+    tab_data = request.get_json()
+
+    new_tab = Tab(name=tab_data['name'], created_by_id=current_user.id, is_group_tab=True)
+    new_tab.save()
+    #
+    current_user_tab_status = TabUserStatus(
+        tab_id=new_tab.id,
+        user_id=current_user.id,
+        status=UserTabStatus.APPROVED,
+    )
+    current_user_tab_status.save()
+    users_in_group_tab = tab_data['otheruser'].split(',')
+
+    for user in users_in_group_tab:
+        other_user = User.get_by_username(user)
+        other_user_tab_status = TabUserStatus(
+            tab_id=new_tab.id, user_id=other_user.id
+        )
+        other_user_tab_status.save()
+
+    tab_view_data = create_tab_view_dictionary(new_tab, current_user_tab_status)
+    return jsonify({'status': 'ok', 'created_tab': tab_view_data})
+
 
 
 @app.route('/api/set_user_tab_status/', methods=['POST'])
