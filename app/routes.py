@@ -129,7 +129,7 @@ def create_new_tab(current_user):
     tab_data = request.get_json()
     other_user = User.get_by_username(tab_data['otheruser'])
     if not other_user.id == current_user.id:
-        if not tab_data['is_group_data']:
+        if not tab_data['is_group_data'] == 'true':
             new_tab = Tab(name=tab_data['name'], created_by_id=current_user.id)
             new_tab.save()
 
@@ -144,7 +144,6 @@ def create_new_tab(current_user):
             current_user_tab_status.save()
             other_user_tab_status.save()
         else:
-            print('test')
             new_tab = Tab(name=tab_data['name'], created_by_id=current_user.id, is_group_tab=True)
             new_tab.save()
             #
