@@ -13,7 +13,7 @@ from app.models.Tabs.UserTabTransactionStatus import UserTabTransactionStatus
 from app.models.User import User
 from app.utilities.utilities_data_view_generator import create_tab_view_dictionary, has_all_users_approved, \
     get_transaction_type_enum, has_all_approved_transaction, updated_user_tab_status, get_user_tab_summaries, \
-    generate_tab_details
+    generate_tab_details, updated_user_group_tab_status
 from app.utilities.validators import is_valid_user_info, is_valid_email
 
 
@@ -242,6 +242,7 @@ def create_tab_transaction(current_user):
 def set_tab_transaction_status(current_user):
     data = request.get_json()
     tab_transaction = TabTransaction.get_by_id(data['tab_transaction_id'])
+    tab = Tab.get_by_id(tab_transaction.tab_id)
     user_tab_transaction_status = UserTabTransactionStatus\
         .get_by_tab_transaction_id_and_user_id(
             tab_transaction.id,
@@ -256,7 +257,10 @@ def set_tab_transaction_status(current_user):
         if transaction_approved_by_all:
             tab_transaction.status = TabTransactionStatus.APPROVED
             tab_transaction.save()
-            updated_user_tab_status(tab_transaction)
+            if tab.is_group_tab is True:
+                updated_user_group_tab_status(tab_transaction, tab)
+            else:
+                updated_user_tab_status(tab_transaction)
             message = 'transaction has successfully been accounted for'
         elif user_tab_transaction_status.status == TabTransactionStatus.DECLINED:
             tab_transaction.status = TabTransactionStatus.DECLINED

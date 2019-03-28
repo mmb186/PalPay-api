@@ -41,7 +41,9 @@ class TabUserStatus(db.Model):
 
     @classmethod
     def get_user_tab_status(cls, tab_id, user_id):
-        return cls.query.filter_by(tab_id=tab_id).filter_by(user_id=user_id).first()
+        return cls.query\
+            .filter_by(tab_id=tab_id)\
+            .filter_by(user_id=user_id).first()
 
     @classmethod
     def get_by_tab_id_and_user_id(cls, tab_id, user_id):
