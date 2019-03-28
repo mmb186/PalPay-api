@@ -13,7 +13,7 @@ from app.models.Tabs.UserTabTransactionStatus import UserTabTransactionStatus
 from app.models.User import User
 from app.utilities.utilities_data_view_generator import create_tab_view_dictionary, has_all_users_approved, \
     get_transaction_type_enum, has_all_approved_transaction, updated_user_tab_status, get_user_tab_summaries, \
-    generate_tab_details
+    generate_tab_details, updated_user_group_tab_status
 from app.utilities.validators import is_valid_user_info, is_valid_email
 
 
@@ -129,19 +129,39 @@ def create_new_tab(current_user):
     tab_data = request.get_json()
     other_user = User.get_by_username(tab_data['otheruser'])
     if not other_user.id == current_user.id:
-        new_tab = Tab(name=tab_data['name'], created_by_id=current_user.id)
-        new_tab.save()
+        if not tab_data['is_group_data']:
+            new_tab = Tab(name=tab_data['name'], created_by_id=current_user.id)
+            new_tab.save()
 
-        current_user_tab_status = TabUserStatus(
-            tab_id=new_tab.id,
-            user_id=current_user.id,
-            status=UserTabStatus.APPROVED,
-        )
-        other_user_tab_status = TabUserStatus(
-            tab_id=new_tab.id, user_id=other_user.id
-        )
-        current_user_tab_status.save()
-        other_user_tab_status.save()
+            current_user_tab_status = TabUserStatus(
+                tab_id=new_tab.id,
+                user_id=current_user.id,
+                status=UserTabStatus.APPROVED,
+            )
+            other_user_tab_status = TabUserStatus(
+                tab_id=new_tab.id, user_id=other_user.id
+            )
+            current_user_tab_status.save()
+            other_user_tab_status.save()
+        else:
+            print('test')
+            new_tab = Tab(name=tab_data['name'], created_by_id=current_user.id, is_group_tab=True)
+            new_tab.save()
+            #
+            current_user_tab_status = TabUserStatus(
+                tab_id=new_tab.id,
+                user_id=current_user.id,
+                status=UserTabStatus.APPROVED,
+            )
+            current_user_tab_status.save()
+
+            for user in tab_data['users']:
+                other_user = User.get_by_username(user)
+                other_user_tab_status = TabUserStatus(
+                    tab_id=new_tab.id, user_id=other_user.id
+                )
+                other_user_tab_status.save()
+
         tab_view_data = create_tab_view_dictionary(new_tab, current_user_tab_status)
         return jsonify({'status': 'ok', 'created_tab': tab_view_data})
     else:
@@ -163,7 +183,7 @@ def set_user_tab_status(current_user):
         all_users_approved = has_all_users_approved(tab_user_status)
         if all_users_approved:
             tab.update_tab_status(TabStatus.ACTIVE)
-        else:
+        elif updated_status == 'DECLINED':
             tab.update_tab_status(TabStatus.INACTIVE)
         return jsonify({
             'status': 'ok',
@@ -222,6 +242,7 @@ def create_tab_transaction(current_user):
 def set_tab_transaction_status(current_user):
     data = request.get_json()
     tab_transaction = TabTransaction.get_by_id(data['tab_transaction_id'])
+    tab = Tab.get_by_id(tab_transaction.tab_id)
     user_tab_transaction_status = UserTabTransactionStatus\
         .get_by_tab_transaction_id_and_user_id(
             tab_transaction.id,
@@ -236,7 +257,10 @@ def set_tab_transaction_status(current_user):
         if transaction_approved_by_all:
             tab_transaction.status = TabTransactionStatus.APPROVED
             tab_transaction.save()
-            updated_user_tab_status(tab_transaction)
+            if tab.is_group_tab is True:
+                updated_user_group_tab_status(tab_transaction, tab)
+            else:
+                updated_user_tab_status(tab_transaction)
             message = 'transaction has successfully been accounted for'
         elif user_tab_transaction_status.status == TabTransactionStatus.DECLINED:
             tab_transaction.status = TabTransactionStatus.DECLINED
