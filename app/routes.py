@@ -175,7 +175,6 @@ def create_new_group_tab(current_user):
     return jsonify({'status': 'ok', 'created_tab': tab_view_data})
 
 
-
 @app.route('/api/set_user_tab_status/', methods=['POST'])
 @login_required_jwt
 def set_user_tab_status(current_user):
