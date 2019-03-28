@@ -48,7 +48,7 @@ def has_all_approved_transaction(tab_transaction):
 
 
 def updated_user_group_tab_status(tab_transaction, tab):
-    users_in_tab = TabUserStatus.get_user_tab_status(tab_transaction.tab_id)
+    users_in_tab = TabUserStatus.get_all_users_tab_status(tab_transaction.tab_id)
     total_transaction_amount = tab_transaction.amount
     split_transaction_amount = tab_transaction / (len(users_in_tab) - 1)
     if not tab_transaction.transaction_type == TransactionType.WITHDRAW:
