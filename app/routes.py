@@ -183,7 +183,7 @@ def set_user_tab_status(current_user):
         all_users_approved = has_all_users_approved(tab_user_status)
         if all_users_approved:
             tab.update_tab_status(TabStatus.ACTIVE)
-        else:
+        elif updated_status == 'DECLINED':
             tab.update_tab_status(TabStatus.INACTIVE)
         return jsonify({
             'status': 'ok',
