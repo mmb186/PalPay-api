@@ -43,7 +43,6 @@ class UserTabTransactionStatus(db.Model):
 
     @classmethod
     def get_user_transaction_data(cls, user_id, tab_id):
-        res = ''
         return db.session\
             .query(TabTransaction, UserTabTransactionStatus)\
             .join(UserTabTransactionStatus)\
