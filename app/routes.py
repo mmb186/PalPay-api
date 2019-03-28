@@ -153,8 +153,9 @@ def create_new_tab(current_user):
                 status=UserTabStatus.APPROVED,
             )
             current_user_tab_status.save()
+            users_in_group_tab = tab_data['otheruser'].split(',')
 
-            for user in tab_data['users']:
+            for user in users_in_group_tab:
                 other_user = User.get_by_username(user)
                 other_user_tab_status = TabUserStatus(
                     tab_id=new_tab.id, user_id=other_user.id
